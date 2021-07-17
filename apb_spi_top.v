@@ -3,6 +3,10 @@
 //   APB to SPI MASTER          //
 //                              //  
 //////////////////////////////////
+`include "apb_slave.v"
+`include "handshake_syn.v"
+`include "spi_master.v"
+`include "spi_slave.v"
 
 module apb_spi_top #(
 parameter ADDRWIDTH = 2'd3 ,
@@ -34,7 +38,14 @@ output                 pready   ;
 output [DATAWIDTH-1:0] prdata   ;    
 output                 pslverr  ; 
 
-
+wire [DATAWIDTH-1 :0]  w_spi_data_out  ;
+wire [DATAWIDTH-1 :0]  w_spi_data_in   ;
+wire                   w_spi_enable    ;
+wire                   w_spi_clk       ;
+wire [2:0]             w_CS            ;
+wire                   w_MISO          ;
+wire                   w_MOSI          ;
+  
 apb_slave #(.ADDRWIDTH(ADDRWIDTH), .DATAWIDTH(DATAWIDTH))
 i_apb_slave (
 .pclk      (pclk           ),           
@@ -69,12 +80,20 @@ i_spi_master  (
  .address (paddr         ),     
  .enable  (w_spi_enable  ),  
  .rw_en   (pwrite        ),        
- .data_out(w_spi_data    ), 
+ .data_out(w_spi_data_out), 
  .rw_ack  (w_rw_ack      ), 
- .spi_clk (), // To SPI Slave
- .CS      (), // To SPI Slave
- .MISO    (), // From SPI Slave
- .MOSI    ()  // To SPI Slave
+ .spi_clk (w_spi_clk     ), 
+ .CS      (w_CS          ), 
+ .MISO    (w_MISO        ), 
+ .MOSI    (w_MOSI        )  
 );
 
+spi_slave i_spi_slave(
+ .spi_clk (w_spi_clk), 
+ .CS      (w_CS    ), 
+ .MISO    (w_MISO   ),
+ .MOSI    (w_MOSI   ) 
+);  
+  
+    
 endmodule 
